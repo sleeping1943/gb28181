@@ -12,6 +12,15 @@
 #include <iostream>
 #include <sstream>
 #include "utils/singleton.h"
+#include <atomic>
+#include <thread>
+
+extern "C" {
+#include <eXosip2/eXosip.h>
+#include <osip2/osip_mt.h>
+}
+
+#define LOG(x) std::cout << x << std::endl;
 
 namespace Xzm
 {
@@ -60,12 +69,29 @@ public:
         std::cout << "server Test" << std::endl;
     }
 
+    bool Init(const std::string& conf_path);
     bool SetServerInfo(const std::string& json_str);
     inline ServerInfo GetServerInfo() {
         return s_info_;
     }
 
+    bool Start();
+    bool Stop();
+
 private:
+    bool init_sip_server();
+    /**
+     * @brief sip服务处理线程函数体
+     * 
+     * @return true 
+     * @return false 
+     */
+    bool run();
+
+private:
+    std::atomic_bool is_quit_;
     ServerInfo s_info_;
+    struct eXosip_t *sip_context_;
+    std::thread thread_;
 };
 };
