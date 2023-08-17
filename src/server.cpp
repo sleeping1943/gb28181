@@ -5,6 +5,7 @@
 
 #include <arpa/inet.h>
 #include <functional>
+#include <mutex>
 #include "event_handler/register_handler.h"
 
 
@@ -113,6 +114,35 @@ bool Server::Stop()
     return true;
 }
 
+bool Server::IsClientExist(const std::string& device)
+{
+    std::lock_guard<std::mutex> _lock(client_mutex_);
+    if (this->clients_.count(device) > 0) {
+        return true;
+    }
+    return false;
+}
+
+bool Server::AddClient(ClientPtr client)
+{
+    std::lock_guard<std::mutex> _lock(client_mutex_);
+    if (clients_.count(client->device) > 0) {
+        return false;
+    }
+    clients_[client->device] = client;
+    return true;
+}
+
+bool Server::RemoveClient(const std::string& device)
+{
+    std::lock_guard<std::mutex> _lock(client_mutex_);
+    if (clients_.count(device) <= 0) {
+        return false;
+    }
+    clients_.erase(device);
+    return true;
+}
+
 bool Server::run()
 {
     while (!is_quit_) {
@@ -134,7 +164,7 @@ bool Server::run()
             handler_ptr = std::make_shared<Handler>();
         }
         if (handler_ptr) {
-            handler_ptr->Process(evtp, 200);
+            handler_ptr->Process(evtp, sip_context_,200);
         }
         eXosip_event_free(evtp);    // 释放事件所占资源
     }

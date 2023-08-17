@@ -23,6 +23,8 @@ namespace Xzm
     {event, std::make_shared<handler>()}
 #define END_REGISTER_EVENT_HANDLER };
 
+#define SIP_STRDUP(field) if (auth->field) (field) = osip_strdup_without_quote(auth->field)
+
 /* sip服务器配置信息 */
 struct ServerInfo
 {
@@ -58,6 +60,12 @@ using ServerInfoPtr = std::shared_ptr<ServerInfo>;
 // 客户端信息
 struct Client
 {
+    Client(const std::string& _ip, unsigned short _port,
+    const std::string& _device): ip(_ip),port(_port),device(_device)
+    {
+
+    }
+
     Client(const std::string& _ip, unsigned short _port,
     const std::string& _device, bool _is_reg, unsigned short _rtp_port):
     ip(_ip),port(_port),device(_device),is_reg(_is_reg),rtp_port(_rtp_port)

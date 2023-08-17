@@ -19,18 +19,11 @@ namespace Xzm
 {
 class Handler {
 public:
-    Handler() {
+    Handler();
+    virtual ~Handler();
+    virtual bool Process(eXosip_event_t *evtp, eXosip_t* sip_context_, int code);
 
-    }
-    virtual ~Handler() {
-
-    }
-
-    virtual bool Process(eXosip_event_t *evtp, int code)
-    {
-        std::cout << "Handler Process!!" << std::endl;
-        return true;
-    }
+    void response_message_answer(eXosip_event_t *evtp, eXosip_t * sip_context_, int code);
 };
 using HandlerPtr = std::shared_ptr<Handler>;
 };

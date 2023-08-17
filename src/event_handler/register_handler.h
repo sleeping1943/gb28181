@@ -21,6 +21,11 @@ public:
     RegisterHandler();
     ~RegisterHandler();
 
-    virtual bool Process(eXosip_event_t *evtp, int code) override;
+    virtual bool Process(eXosip_event_t *evtp, eXosip_t* sip_context_, int code) override;
+
+private:
+    bool register_client(eXosip_event_t *evtp, eXosip_t* sip_context_);
+    void response_register_401unauthorized(eXosip_event_t *evtp, eXosip_t* sip_context_);
+    bool check_ha1(eXosip_event_t *evtp, osip_authorization_t *auth);
 };
 };
