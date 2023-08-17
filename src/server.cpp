@@ -49,7 +49,7 @@ bool Server::SetServerInfo(const std::string& json_str)
     JSON_VALUE_REQUIRE_STRING(doc, "ip", s_info_.ip);
     JSON_VALUE_REQUIRE_INT(doc, "port", s_info_.port);
     JSON_VALUE_REQUIRE_INT(doc, "rtpPort", s_info_.rtp_port);
-    JSON_VALUE_REQUIRE_STRING(doc, "sipId", s_info_.sid_id);
+    JSON_VALUE_REQUIRE_STRING(doc, "sipId", s_info_.sip_id);
     JSON_VALUE_REQUIRE_STRING(doc, "sipRealm", s_info_.realm);
     JSON_VALUE_REQUIRE_STRING(doc, "sipPass", s_info_.passwd);
     JSON_VALUE_REQUIRE_INT(doc, "sipTimeout", s_info_.timeout);
@@ -91,8 +91,8 @@ bool Server::init_sip_server()
       step 4
       添加授权信息
       */
-    if (eXosip_add_authentication_info(sip_context_, s_info_.sid_id.c_str(),
-       s_info_.sid_id.c_str(), s_info_.passwd.c_str(), nullptr, s_info_.realm.c_str())) {
+    if (eXosip_add_authentication_info(sip_context_, s_info_.sip_id.c_str(),
+       s_info_.sip_id.c_str(), s_info_.passwd.c_str(), nullptr, s_info_.realm.c_str())) {
         LOG("eXosip_add_authentication_info error");
         return false;
     }

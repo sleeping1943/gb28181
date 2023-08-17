@@ -33,7 +33,7 @@ struct ServerInfo
     std::string ip;
     unsigned short port;
     unsigned short  rtp_port;
-    std::string sid_id;         //sip服务器ID
+    std::string sip_id;         //sip服务器ID
     std::string realm;          // sip域
     std::string passwd;         // 服务器密码
     unsigned int timeout;       // 超时间隔
@@ -47,7 +47,7 @@ struct ServerInfo
             << std::endl << "\tip:\t" << ip
             << std::endl << "\tport:\t" << port
             << std::endl << "\trtp_port:\t" <<  rtp_port
-            << std::endl << "\tsid_id:\t" << sid_id
+            << std::endl << "\tsip_id:\t" << sip_id
             << std::endl << "\trealm:\t" << realm
             << std::endl << "\tpasswd:\t" << passwd
             << std::endl << "\ttimeout:\t" << timeout
