@@ -5,6 +5,7 @@
 
 #include <arpa/inet.h>
 #include <functional>
+#include "event_handler/register_handler.h"
 
 
 
@@ -17,7 +18,9 @@ Server::Server():is_quit_(false)
 
 Server::~Server()
 {
-
+    if (thread_.joinable()) {
+        thread_.join();
+    }
 }
 
 bool Server::Init(const std::string& conf_path)
@@ -55,6 +58,7 @@ bool Server::SetServerInfo(const std::string& json_str)
 
 bool Server::init_sip_server()
 {
+    register_event_handler();
     /* 
     step 1 
     申请结构体内存
@@ -105,6 +109,7 @@ bool Server::Start()
 
 bool Server::Stop()
 {
+    is_quit_.store(true);
     return true;
 }
 
@@ -120,10 +125,39 @@ bool Server::run()
         eXosip_automatic_action(sip_context_);  // 执行一些自动操作
         /*
          handler the event here
+         应该有个默认的处理函数体,即使没有注册处理函数，也不会没有响应
          */
+        std::shared_ptr<Handler> handler_ptr;
+        if (event_map_.count(evtp->type) > 0) {
+            handler_ptr = event_map_[evtp->type];
+        } else {
+            handler_ptr = std::make_shared<Handler>();
+        }
+        if (handler_ptr) {
+            handler_ptr->Process(evtp, 200);
+        }
         eXosip_event_free(evtp);    // 释放事件所占资源
     }
     return true;
 }
 
+bool Server::register_event_handler()
+{
+    BEGIN_REGISTER_EVENT_HANDLER 
+        REGISTER_EVENT_HANDLER(EXOSIP_MESSAGE_NEW, RegisterHandler), // 新客户端发送请求
+    END_REGISTER_EVENT_HANDLER 
+        //{ EXOSIP_MESSAGE_NEW, std::make_shared<RegisterHandler>()}, // 新客户端发送请求
+        //{ EXOSIP_CALL_MESSAGE_NEW, nullptr},
+        //{ EXOSIP_CALL_CLOSED, nullptr},
+        //{ EXOSIP_CALL_RELEASED, nullptr},
+        //{ EXOSIP_MESSAGE_NEW, std::make_shared<RegisterHandler>()}, // 新客户端发送请求
+        //{ EXOSIP_MESSAGE_ANSWERED, nullptr},
+        //{ EXOSIP_MESSAGE_REQUESTFAILURE, nullptr},
+        //{ EXOSIP_CALL_INVITE, nullptr},
+        //{ EXOSIP_CALL_PROCEEDING, nullptr},
+        //{ EXOSIP_CALL_ANSWERED, nullptr},
+        //{ EXOSIP_CALL_SERVERFAILURE, nullptr},
+        //{ EXOSIP_IN_SUBSCRIPTION_NEW, nullptr},
+    return true;
+}
 };

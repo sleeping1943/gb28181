@@ -14,47 +14,19 @@
 #include "utils/singleton.h"
 #include <atomic>
 #include <thread>
+#include <unordered_map>
+#include "event_handler/handler.h"
 
 extern "C" {
 #include <eXosip2/eXosip.h>
 #include <osip2/osip_mt.h>
 }
+#include "xzm_defines.h"
 
 #define LOG(x) std::cout << x << std::endl;
 
 namespace Xzm
 {
-
-/* sip服务器配置信息 */
-struct ServerInfo
-{
-    std::string ua;     //服务器名称
-    std::string nonce;  //随机数值
-    std::string ip;
-    unsigned short port;
-    unsigned short  rtp_port;
-    std::string sid_id;         //sip服务器ID
-    std::string realm;          // sip域
-    std::string passwd;         // 服务器密码
-    unsigned int timeout;       // 超时间隔
-    unsigned int valid_time;    // 有效时长
-
-    std::string str()
-    {
-        std::stringstream ss;
-        ss << std::endl << "\tua:\t" << ua
-            << std::endl << "\tnonce:\t" << nonce
-            << std::endl << "\tip:\t" << ip
-            << std::endl << "\tport:\t" << port
-            << std::endl << "\trtp_port:\t" <<  rtp_port
-            << std::endl << "\tsid_id:\t" << sid_id
-            << std::endl << "\trealm:\t" << realm
-            << std::endl << "\tpasswd:\t" << passwd
-            << std::endl << "\ttimeout:\t" << timeout
-            << std::endl << "\tvalid_time:\t" << valid_time;
-        return ss.str();
-    }
-};
 
 class Server : public util::Singleton<Server>
 {
@@ -88,10 +60,14 @@ private:
      */
     bool run();
 
+    bool register_event_handler();
+
 private:
     std::atomic_bool is_quit_;
     ServerInfo s_info_;
     struct eXosip_t *sip_context_;
     std::thread thread_;
+    std::unordered_map<eXosip_event_type, HandlerPtr> event_map_; // 注册的事件处理函数体
+    std::unordered_map<std::string, ClientPtr> clients_;  // 已注册的客户端 
 };
 };
