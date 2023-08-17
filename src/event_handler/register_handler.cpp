@@ -22,11 +22,12 @@ RegisterHandler::~RegisterHandler()
 bool RegisterHandler::Process(eXosip_event_t *evtp, eXosip_t* sip_context_, int code)
 {
     std::cout << "register_handler Process!!!" << std::endl;
-    if (MSG_IS_REGISTER(evtp->request)) {
+    if (MSG_IS_REGISTER(evtp->request)) {   // 注册客户端消息
         std::cout << "register msg!!" << std::endl;
         register_client(evtp, sip_context_);
-    } else if (MSG_IS_MESSAGE(evtp->request)) {
+    } else if (MSG_IS_MESSAGE(evtp->request)) { // 普通消息,包含心跳信息等
         std::cout << "message msg!!" << std::endl;
+        response_message(evtp, sip_context_, 200);  // 响应消息,比如回复心跳keepalive
     } else if (MSG_IS_BYE(evtp->request)) {
         std::cout << "bye message msg!!" << std::endl;
     } else if (strncmp(evtp->request->sip_method, "BYE", 3) != 0) {

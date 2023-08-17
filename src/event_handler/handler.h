@@ -23,7 +23,11 @@ public:
     virtual ~Handler();
     virtual bool Process(eXosip_event_t *evtp, eXosip_t* sip_context_, int code);
 
+    void response_message(eXosip_event_t *evtp, eXosip_t * sip_context_, int code);
     void response_message_answer(eXosip_event_t *evtp, eXosip_t * sip_context_, int code);
+
+    int parse_xml(const char *data, const char *s_mark, bool with_s_make,
+        const char *e_mark, bool with_e_make, char *dest);
 };
 using HandlerPtr = std::shared_ptr<Handler>;
 };
