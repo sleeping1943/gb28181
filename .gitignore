@@ -1,0 +1,11 @@
+# Xmake cache
+.xmake/*
+build/*
+
+# MacOS Cache
+.DS_Store
+*.o
+.vscode
+conf
+gb28181-server
+
