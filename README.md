@@ -1,6 +1,6 @@
-[TOC]
-
 # gb28181-server说明
+
+---
 
 ## 平台说明
     此项目基于ubuntu20.04开发测试,暂不支持windows系统
@@ -33,7 +33,7 @@ cd osip2-5.1.2
  sudo make install
 ```
 
-*编译安装exosip2-5.1.2,默认安装目录/usr/local/include和/usr/local/lib
+* 编译安装exosip2-5.1.2,默认安装目录/usr/local/include和/usr/local/lib
 ```
  cd exosip2-5.1.2
  ./configure
@@ -50,3 +50,9 @@ cd osip2-5.1.2
 3、退出
 ctrl+c,程序接收信号退出执行而不是直接暴力退出
 ```
+
+* 项目使用xmake作为构建工具,使用debug.sh/release.sh也会自动使用xmake生成CMakeLists.txt和makefile
+
+
+## 特别感谢
+    此项目参考https://gitee.com/Vanishi/BXC_SipServer
