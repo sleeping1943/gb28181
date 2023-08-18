@@ -6,12 +6,11 @@
 #include "utils/helper.h"
 #include <signal.h>
 
-std::atomic_bool is_quit(false);
 const static std::string kConfPath = "./conf/config.json";
 
 void quit_server(int)
 {
-    is_quit.store(true);
+    Xzm::Server::is_server_quit.store(true);
     std::cout << "\033[31mready to quit server!!\033[0m" << std::endl;
 }
 
@@ -32,7 +31,7 @@ int main(int argc, char** argv)
     std::cout << "s_info_:" << Xzm::Server::instance()->GetServerInfo().str() << std::endl;
 
     unsigned int interval = 5;
-    while (!is_quit) {
+    while (!Xzm::Server::is_server_quit && !Xzm::Server::is_client_all_quit) {
         std::cout << "\033[32mwait for server quit[" << interval << "s interval]...\033[0m" << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(interval * 1000));
     }

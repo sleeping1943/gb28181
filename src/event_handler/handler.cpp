@@ -21,6 +21,14 @@ bool Handler::Process(eXosip_event_t *evtp, eXosip_t* sip_context_, int code)
     return true;
 }
 
+int Handler::request_bye(eXosip_event_t *evtp, eXosip_t *sip_context_)
+{
+    eXosip_lock(sip_context_);
+    int ret = eXosip_call_terminate(sip_context_, evtp->cid, evtp->did);
+    eXosip_unlock(sip_context_);
+    return 0;
+}
+
 void Handler::response_message(eXosip_event_t *evtp, eXosip_t * sip_context_, int code)
 {
     osip_body_t* body = nullptr;
@@ -31,6 +39,11 @@ void Handler::response_message(eXosip_event_t *evtp, eXosip_t * sip_context_, in
     if(body){
         parse_xml(body->body, "<CmdType>", false, "</CmdType>", false, CmdType);
         parse_xml(body->body, "<DeviceID>", false, "</DeviceID>", false, DeviceID);
+    }
+
+    if (!Server::instance()->IsClientExist(DeviceID)) {  // 服务器没有此客户端信息,断开连接
+        request_bye(evtp, sip_context_);
+        return;
     }
     LOGI("CmdType=%s,DeviceID=%s", CmdType,DeviceID);
 
@@ -94,7 +107,8 @@ int Handler::request_invite(eXosip_t *sip_context, const std::string& device, co
               "a=setup:passive\r\n"
               "a=connection:new\r\n"
               "y=0100000001\r\n"
-              "f=\r\n", s_info.sip_id.c_str(),"10.23.132.27"/*s_info.ip.c_str()*/, "10.23.132.27"/*s_info.ip.c_str()*/, s_info.rtp_port);
+              //"f=\r\n", s_info.sip_id.c_str(),s_info.ip.c_str(), s_info.rtp_ip.c_str(), s_info.rtp_port);
+              "f=\r\n", device.c_str(),s_info.rtp_ip.c_str(), s_info.rtp_ip.c_str(), s_info.rtp_port);
 
     int ret = eXosip_call_build_initial_invite(sip_context, &msg, to, from,  nullptr, nullptr);
     if (ret) {

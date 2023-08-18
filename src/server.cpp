@@ -7,11 +7,16 @@
 #include <functional>
 #include <mutex>
 #include "event_handler/register_handler.h"
+#include "event_handler/call_answer_handler.h"
 
 
 
 namespace Xzm
 {
+
+std::atomic_bool Server::is_server_quit(false);
+std::atomic_bool Server::is_client_all_quit(false);
+
 Server::Server():is_quit_(false)
 {
 
@@ -48,6 +53,7 @@ bool Server::SetServerInfo(const std::string& json_str)
     JSON_VALUE_REQUIRE_STRING(doc, "nonce", s_info_.nonce);
     JSON_VALUE_REQUIRE_STRING(doc, "ip", s_info_.ip);
     JSON_VALUE_REQUIRE_INT(doc, "port", s_info_.port);
+    JSON_VALUE_REQUIRE_STRING(doc, "rtp_ip", s_info_.rtp_ip);
     JSON_VALUE_REQUIRE_INT(doc, "rtpPort", s_info_.rtp_port);
     JSON_VALUE_REQUIRE_STRING(doc, "sipId", s_info_.sip_id);
     JSON_VALUE_REQUIRE_STRING(doc, "sipRealm", s_info_.realm);
@@ -145,7 +151,11 @@ bool Server::RemoveClient(const std::string& device)
 
 bool Server::run()
 {
-    while (!is_quit_) {
+    while (true) {
+        if (is_quit_ && clients_.empty()) {
+            is_client_all_quit = true;
+            break;
+        }
         eXosip_event_t *evtp = eXosip_event_wait(sip_context_, 0, 20);  // 接受时间20ms超时
         if (!evtp) {
             eXosip_automatic_action(sip_context_);  // 执行一些自动操作
@@ -175,6 +185,7 @@ bool Server::register_event_handler()
 {
     BEGIN_REGISTER_EVENT_HANDLER 
         REGISTER_EVENT_HANDLER(EXOSIP_MESSAGE_NEW, RegisterHandler), // 新客户端发送请求
+        REGISTER_EVENT_HANDLER(EXOSIP_CALL_ANSWERED, CallAnswerHandler), // 宣布通话开始
     END_REGISTER_EVENT_HANDLER 
         //{ EXOSIP_MESSAGE_NEW, std::make_shared<RegisterHandler>()}, // 新客户端发送请求
         //{ EXOSIP_CALL_MESSAGE_NEW, nullptr},

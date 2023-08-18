@@ -32,6 +32,7 @@ struct ServerInfo
     std::string nonce;  //随机数值
     std::string ip;
     unsigned short port;
+    std::string rtp_ip;
     unsigned short  rtp_port;
     std::string sip_id;         //sip服务器ID
     std::string realm;          // sip域
@@ -46,6 +47,7 @@ struct ServerInfo
             << std::endl << "\tnonce:\t" << nonce
             << std::endl << "\tip:\t" << ip
             << std::endl << "\tport:\t" << port
+            << std::endl << "\trtp_ip:\t" <<  rtp_ip
             << std::endl << "\trtp_port:\t" <<  rtp_port
             << std::endl << "\tsip_id:\t" << sip_id
             << std::endl << "\trealm:\t" << realm

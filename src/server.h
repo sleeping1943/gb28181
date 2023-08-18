@@ -64,6 +64,10 @@ private:
 
     bool register_event_handler();
 
+public:
+    static std::atomic_bool is_server_quit;
+    static std::atomic_bool is_client_all_quit;
+
 private:
     std::atomic_bool is_quit_;
     ServerInfo s_info_;

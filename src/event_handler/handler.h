@@ -23,6 +23,14 @@ public:
     virtual ~Handler();
     virtual bool Process(eXosip_event_t *evtp, eXosip_t* sip_context_, int code);
 
+    /**
+     * @brief 结束会话
+     * 
+     * @param evtp 
+     * @param sip_context_ 
+     * @return int 
+     */
+    int request_bye(eXosip_event_t *evtp, eXosip_t *sip_context_);
     void response_message(eXosip_event_t *evtp, eXosip_t * sip_context_, int code);
     void response_message_answer(eXosip_event_t *evtp, eXosip_t * sip_context_, int code);
     int request_invite(eXosip_t *sip_context, const std::string& device, const std::string& user_ip, unsigned short user_port);

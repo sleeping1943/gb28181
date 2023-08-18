@@ -22,13 +22,30 @@ RegisterHandler::~RegisterHandler()
 bool RegisterHandler::Process(eXosip_event_t *evtp, eXosip_t* sip_context_, int code)
 {
     std::cout << "register_handler Process!!!" << std::endl;
+    // contact为null，不能这么获取
+    //osip_contact_t *contact = nullptr;
+    //osip_message_get_contact(evtp->request, 0, &contact);
+    //std::string device = std::string(contact->url->username);
     if (MSG_IS_REGISTER(evtp->request)) {   // 注册客户端消息
         std::cout << "register msg!!" << std::endl;
         register_client(evtp, sip_context_);
     } else if (MSG_IS_MESSAGE(evtp->request)) { // 普通消息,包含心跳信息等
-        std::cout << "message msg!!" << std::endl;
         response_message(evtp, sip_context_, 200);  // 响应消息,比如回复心跳keepalive
     } else if (MSG_IS_BYE(evtp->request)) {
+        osip_body_t* body = nullptr;
+        char CmdType[64] = {0};
+        char DeviceID[64] = {0};
+        // 获取sip协议中message消息body体xml数据并解析
+        osip_message_get_body(evtp->request, 0, &body);
+        if(body){
+            parse_xml(body->body, "<CmdType>", false, "</CmdType>", false, CmdType);
+            parse_xml(body->body, "<DeviceID>", false, "</DeviceID>", false, DeviceID);
+        }
+        if (Server::is_server_quit) {   // 服务退出,需要断开所有客户端连接
+            Server::instance()->RemoveClient(DeviceID);
+            std::cout << "\033[31m断开客户端[" << DeviceID << "]\033[0m" << std::endl;
+        }
+        request_bye(evtp, sip_context_);
         std::cout << "bye message msg!!" << std::endl;
     } else if (strncmp(evtp->request->sip_method, "BYE", 3) != 0) {
         std::cout << "bye" << std::endl;
@@ -49,7 +66,7 @@ bool RegisterHandler::register_client(eXosip_event_t *evtp, eXosip_t* sip_contex
     }
 
     osip_contact_t *contact = nullptr;
-    osip_message_get_contact (evtp->request, 0, &contact);
+    osip_message_get_contact(evtp->request, 0, &contact);
 
     ClientPtr client = std::make_shared<Client>( contact->url->host,
         atoi(contact->url->port), contact->url->username);
