@@ -2,6 +2,7 @@
 #include "include/rapidjson/document.h"
 #include "utils/json_helper.h"
 #include "utils/helper.h"
+#include "utils/log.h"
 
 #include <arpa/inet.h>
 #include <functional>
@@ -149,12 +150,24 @@ bool Server::RemoveClient(const std::string& device)
     return true;
 }
 
+void Server::ClearClient()
+{
+    std::lock_guard<std::mutex> _lock(client_mutex_);
+    clients_.clear();
+    LOGI("already quit all clients...");
+    return;
+}
+
 bool Server::run()
 {
     while (true) {
-        if (is_quit_ && clients_.empty()) {
-            is_client_all_quit = true;
-            break;
+        {
+            std::lock_guard<std::mutex> _lock(client_mutex_);
+            if (is_quit_ && clients_.empty()) {
+                is_client_all_quit = true;
+                LOGI("aleady quit all clients......");
+                break;
+            }
         }
         eXosip_event_t *evtp = eXosip_event_wait(sip_context_, 0, 20);  // 接受时间20ms超时
         if (!evtp) {
@@ -178,6 +191,8 @@ bool Server::run()
         }
         eXosip_event_free(evtp);    // 释放事件所占资源
     }
+    
+    //ClearClient();
     return true;
 }
 

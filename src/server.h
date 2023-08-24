@@ -51,6 +51,7 @@ public:
     bool IsClientExist(const std::string& device);
     bool AddClient(ClientPtr client);
     bool RemoveClient(const std::string& device);
+    void ClearClient();
 
 private:
     bool init_sip_server();

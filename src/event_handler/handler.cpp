@@ -18,6 +18,7 @@ Handler::~Handler()
 bool Handler::Process(eXosip_event_t *evtp, eXosip_t* sip_context_, int code)
 {
     std::cout << "Handler Process!!" << std::endl;
+    this->response_message(evtp, sip_context_, code);
     return true;
 }
 
@@ -44,7 +45,12 @@ void Handler::response_message(eXosip_event_t *evtp, eXosip_t * sip_context_, in
     if (!Server::instance()->IsClientExist(DeviceID)) {  // 服务器没有此客户端信息,断开连接
         request_bye(evtp, sip_context_);
         return;
+    } else if (Server::is_server_quit) {    // 已经开始关闭服务,删除该客户端,发送bye
+        Server::instance()->RemoveClient(DeviceID);
+        request_bye(evtp, sip_context_);
+        return;
     }
+
     LOGI("CmdType=%s,DeviceID=%s", CmdType,DeviceID);
 
     if(!strcmp(CmdType, "Catalog")) {
