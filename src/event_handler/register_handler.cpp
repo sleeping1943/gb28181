@@ -21,13 +21,13 @@ RegisterHandler::~RegisterHandler()
 
 bool RegisterHandler::Process(eXosip_event_t *evtp, eXosip_t* sip_context_, int code)
 {
-    std::cout << "register_handler Process!!!" << std::endl;
+    CLOGI(YELLOW, "register_handler Process!!!");
     // contact为null，不能这么获取
     //osip_contact_t *contact = nullptr;
     //osip_message_get_contact(evtp->request, 0, &contact);
     //std::string device = std::string(contact->url->username);
     if (MSG_IS_REGISTER(evtp->request)) {   // 注册客户端消息
-        std::cout << "register msg!!" << std::endl;
+        CLOGI(BLUE, "register msg!!");
         register_client(evtp, sip_context_);
     } else if (MSG_IS_MESSAGE(evtp->request)) { // 普通消息,包含心跳信息等
         response_message(evtp, sip_context_, 200);  // 响应消息,比如回复心跳keepalive
