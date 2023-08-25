@@ -1,0 +1,22 @@
+{
+    "ua_comment":"user agent",
+    "ua":"XZM_SipServer",
+    "nonce_comment":"随机数值",
+    "nonce":"1232413141231412",
+    "ip":"10.23.132.50",
+    "port": 15060,
+    "rtp_ip_commnet":"流媒体服务器IP",
+    "rtp_ip":"10.23.132.27",
+    "rtpPort_commnet":"流媒体服务器端口",
+    "rtpPort":10000,
+    "sipId_comment":"sip服务器ID",
+    "sipId":"34020000002000000001",
+    "sipRealm_comment":"sip域",
+    "sipRealm":"3402000000",
+    "sipPass_comment":"sip服务器密码",
+    "sipPass":"123456789",
+    "sipTimeout_comment":"sip超时间隔",
+    "sipTimeout":1800,
+    "sipExpiry_comment":"有效时常",
+    "sipExpiry":3600
+}
