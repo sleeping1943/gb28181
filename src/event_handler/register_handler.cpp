@@ -5,6 +5,7 @@
 #include "../server.h"
 #include "../utils/http_digest.h"
 #include "../utils/log.h"
+#include "../utils/helper.h"
 
 namespace Xzm
 {
@@ -67,7 +68,7 @@ bool RegisterHandler::register_client(eXosip_event_t *evtp, eXosip_t* sip_contex
 
     osip_contact_t *contact = nullptr;
     osip_message_get_contact(evtp->request, 0, &contact);
-
+    auto s_info = Server::instance()->GetServerInfo();
     ClientPtr client = std::make_shared<Client>( contact->url->host,
         atoi(contact->url->port), contact->url->username);
     if (check_ha1(evtp, auth)) {
@@ -76,7 +77,7 @@ bool RegisterHandler::register_client(eXosip_event_t *evtp, eXosip_t* sip_contex
         if (!Server::instance()->IsClientExist(client->device)) {   // 不存在该客户端
             Server::instance()->AddClient(client);
         }
-        request_invite(sip_context_, client->device, client->ip,client->port);
+        request_invite(sip_context_, client);
     } else {
         this->response_message_answer(evtp, sip_context_, 401);
         LOGI("Camera registration error, p=%s,port=%d,device=%s",client->ip.c_str(),client->port,client->device.c_str());

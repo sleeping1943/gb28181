@@ -14,6 +14,7 @@
 #include <iostream>
 #include "eXosip2/eXosip.h"
 #include <memory>
+#include "../xzm_defines.h"
 
 namespace Xzm
 {
@@ -33,7 +34,7 @@ public:
     int request_bye(eXosip_event_t *evtp, eXosip_t *sip_context_);
     void response_message(eXosip_event_t *evtp, eXosip_t * sip_context_, int code);
     void response_message_answer(eXosip_event_t *evtp, eXosip_t * sip_context_, int code);
-    int request_invite(eXosip_t *sip_context, const std::string& device, const std::string& user_ip, unsigned short user_port);
+    int request_invite(eXosip_t *sip_context, ClientPtr client);
 
     int parse_xml(const char *data, const char *s_mark, bool with_s_make,
         const char *e_mark, bool with_e_make, char *dest);

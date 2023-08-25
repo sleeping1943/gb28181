@@ -15,5 +15,9 @@
 namespace Xzm {
 namespace util {
     bool read_file(const std::string& file_path, std::string& content);
+    std::string build_ssrc(bool is_alive, const std::string& realm);
+    std::string convert10to16(const int num);
+    std::string convert10to16(const std::string& num);
+    std::string get_rtsp_addr(const std::string& mip, const std::string& ssrc);
 };
 };

@@ -82,6 +82,7 @@ struct Client
     std::string device;
     bool is_reg = false;
     unsigned short rtp_port = 10000;
+    std::string ssrc;   // 10进制
 };
 using ClientPtr = std::shared_ptr<Client>;
 

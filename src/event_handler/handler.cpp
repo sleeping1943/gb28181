@@ -1,7 +1,9 @@
 #include "handler.h"
 #include "../utils/log.h"
+#include <osipparser2/osip_parser.h>
 #include <string.h>
 #include "../server.h"
+#include "../utils/helper.h"
 
 namespace Xzm {
 
@@ -40,8 +42,9 @@ void Handler::response_message(eXosip_event_t *evtp, eXosip_t * sip_context_, in
     if(body){
         parse_xml(body->body, "<CmdType>", false, "</CmdType>", false, CmdType);
         parse_xml(body->body, "<DeviceID>", false, "</DeviceID>", false, DeviceID);
+        CLOGI(YELLOW, "%s", body->body);
     }
-
+    
     if (!Server::instance()->IsClientExist(DeviceID)) {  // 服务器没有此客户端信息,断开连接
         request_bye(evtp, sip_context_);
         return;
@@ -84,9 +87,8 @@ void Handler::response_message_answer(eXosip_event_t *evtp, eXosip_t * sip_conte
 
 }
 
-int Handler::request_invite(eXosip_t *sip_context, const std::string& device, const std::string& user_ip, unsigned short user_port) {
-    LOGI("INVITE");
-
+int Handler::request_invite(eXosip_t *sip_context, ClientPtr client)
+{
     char session_exp[1024] = { 0 };
     osip_message_t *msg = nullptr;
     char from[1024] = {0};
@@ -96,9 +98,12 @@ int Handler::request_invite(eXosip_t *sip_context, const std::string& device, co
     char head[1024] = {0};
 
     auto s_info = Server::instance()->GetServerInfo();
+    client->ssrc = Xzm::util::build_ssrc(true, s_info.realm);
+    auto ssrc = Xzm::util::convert10to16(client->ssrc);
+    CLOGI(RED, "addr:%s", Xzm::util::get_rtsp_addr(s_info.rtp_ip, ssrc).c_str());
     sprintf(from, "sip:%s@%s:%d", s_info.sip_id.c_str(),s_info.ip.c_str(), s_info.port);
     sprintf(contact, "sip:%s@%s:%d", s_info.sip_id.c_str(),s_info.ip.c_str(), s_info.port);
-    sprintf(to, "sip:%s@%s:%d", device.c_str(), user_ip.c_str(), user_port);
+    sprintf(to, "sip:%s@%s:%d", client->device.c_str(), client->ip.c_str(), client->port);
     snprintf (sdp, 2048,
               "v=0\r\n"
               "o=%s 0 0 IN IP4 %s\r\n"
@@ -112,9 +117,10 @@ int Handler::request_invite(eXosip_t *sip_context, const std::string& device, co
               "a=rtpmap:97 MPEG4/90000\r\n"
               "a=setup:passive\r\n"
               "a=connection:new\r\n"
-              "y=0100000001\r\n"
+              "y=%s\r\n"
+              "f=\r\n", client->device.c_str(),s_info.rtp_ip.c_str(), s_info.rtp_ip.c_str(), s_info.rtp_port, client->ssrc.c_str());
+              //"y=0100000001\r\n"
               //"f=\r\n", s_info.sip_id.c_str(),s_info.ip.c_str(), s_info.rtp_ip.c_str(), s_info.rtp_port);
-              "f=\r\n", device.c_str(),s_info.rtp_ip.c_str(), s_info.rtp_ip.c_str(), s_info.rtp_port);
 
     int ret = eXosip_call_build_initial_invite(sip_context, &msg, to, from,  nullptr, nullptr);
     if (ret) {
@@ -157,3 +163,20 @@ int Handler::parse_xml(const char *data, const char *s_mark, bool with_s_make, c
 
 }
 };
+
+/*
+"v=0\r\n
+o=34020000002000000001 0 0 IN IP4 10.23.132.27\r\n
+s=Play\r\n
+c=IN IP4 10.23.132.27\r\n
+t=0 0\r\n
+m=video 10000 TCP/RTP/AVP 96 98 97\r\n
+a=recvonly\r\n
+a=rtpmap:96 PS/90000\r\n
+a=rtpmap:98 H264/90000\r\n
+a=rtpmap:97 MPEG4/90000\r\n
+a=setup:passive\r\n
+a=connection:new\r\n
+y=0200002495\r\n
+f=\r\n"
+*/
