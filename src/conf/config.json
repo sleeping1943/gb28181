@@ -3,7 +3,7 @@
     "ua":"XZM_SipServer",
     "nonce_comment":"随机数值",
     "nonce":"1232413141231412",
-    "ip":"10.23.132.50",
+    "ip":"10.23.132.54",
     "port": 15060,
     "rtp_ip_commnet":"流媒体服务器IP",
     "rtp_ip":"10.23.132.27",
