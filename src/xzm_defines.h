@@ -9,10 +9,13 @@
  * 
  */
 #pragma once
+#include <boost/thread/pthread/shared_mutex.hpp>
 #include <string>
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/shared_mutex.hpp>
 
 namespace Xzm
 {
@@ -24,6 +27,11 @@ namespace Xzm
 #define END_REGISTER_EVENT_HANDLER };
 
 #define SIP_STRDUP(field) if (auth->field) (field) = osip_strdup_without_quote(auth->field)
+
+/* 读写锁定义 */
+typedef boost::shared_mutex B_Lock;
+typedef boost::unique_lock<B_Lock> WriteLock;
+typedef boost::shared_lock<B_Lock> ReadLock;
 
 /* sip服务器配置信息 */
 struct ServerInfo

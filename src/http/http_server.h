@@ -29,6 +29,8 @@ public:
 
 private:
     XHttpServer();
+    int query_device_list(HttpRequest* req, HttpResponse* resp);
+
 
 private:
     hv::HttpService router;

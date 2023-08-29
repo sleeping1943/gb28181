@@ -23,7 +23,8 @@ target("gb28181-server")
         "hv",
         "osip2", 
         "osipparser2",
-        "eXosip2"
+        "eXosip2",
+        "boost_thread"
     )
 
 --

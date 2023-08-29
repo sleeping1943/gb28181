@@ -2,7 +2,10 @@
 #include "../include/rapidjson/document.h"
 #include "../utils/json_helper.h"
 #include "../utils/helper.h"
+#include "../utils/log.h"
+#include <functional>
 #include <hv/HttpServer.h>
+#include "../server.h"
 
 namespace Xzm
 {
@@ -34,7 +37,10 @@ bool XHttpServer::Init(const std::string& conf_path)
     server_.service = &router;
     server_.port = s_info_.port;
 
-    router.GET("/query_device", [] (HttpRequest* req, HttpResponse* resp) {
+    router.GET("/query_device",
+     std::bind(&XHttpServer::query_device_list, this, std::placeholders::_1, std::placeholders::_2));
+    /*
+        [] () {
         return resp->String(
         "{" \
         "    \"device\":["  \
@@ -44,7 +50,7 @@ bool XHttpServer::Init(const std::string& conf_path)
         "    ]" \
         "}");
     });
-
+    */
 
     return true;
 }
@@ -69,4 +75,31 @@ bool XHttpServer::Run()
     });
     return true;
 }
+
+int XHttpServer::query_device_list(HttpRequest* req, HttpResponse* resp)
+{
+    std::string device_list;
+    rapidjson::Document doc(rapidjson::kObjectType);    // doc.SetObject();
+    rapidjson::Document::AllocatorType& allocator = doc.GetAllocator();
+    std::vector<ClientPtr> vec_device;
+    const auto& clients = Server::instance()->GetClients();
+    rapidjson::Value arr_device(rapidjson::kArrayType);
+    for (const auto& iter : clients) {
+        ClientPtr device = iter.second;
+        rapidjson::Value value(rapidjson::kObjectType);
+        rapidjson::Value d_name(rapidjson::kStringType);
+        d_name.SetString(device->device.c_str(), allocator);
+        //value.AddMember("name", device->device.c_str(), allocator);
+        value.AddMember("name", d_name, allocator);
+        arr_device.PushBack(value, allocator);
+    }
+    doc.AddMember("device_list", arr_device, allocator);
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    doc.Accept(writer);
+    device_list = buffer.GetString();
+    CLOGI(BLUE, "device_list:%s", device_list.c_str());
+    return resp->String(device_list);
+}
+
 };

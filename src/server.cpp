@@ -128,7 +128,7 @@ bool Server::Stop()
 
 bool Server::IsClientExist(const std::string& device)
 {
-    std::lock_guard<std::mutex> _lock(client_mutex_);
+    ReadLock _lock(client_mutex_);
     if (this->clients_.count(device) > 0) {
         return true;
     }
@@ -137,7 +137,7 @@ bool Server::IsClientExist(const std::string& device)
 
 bool Server::AddClient(ClientPtr client)
 {
-    std::lock_guard<std::mutex> _lock(client_mutex_);
+    WriteLock _lock(client_mutex_);
     if (clients_.count(client->device) > 0) {
         return false;
     }
@@ -147,7 +147,7 @@ bool Server::AddClient(ClientPtr client)
 
 bool Server::RemoveClient(const std::string& device)
 {
-    std::lock_guard<std::mutex> _lock(client_mutex_);
+    WriteLock _lock(client_mutex_);
     if (clients_.count(device) <= 0) {
         return false;
     }
@@ -157,17 +157,24 @@ bool Server::RemoveClient(const std::string& device)
 
 void Server::ClearClient()
 {
-    std::lock_guard<std::mutex> _lock(client_mutex_);
+    ReadLock _lock(client_mutex_);
     clients_.clear();
     LOGI("already quit all clients...");
     return;
+}
+
+std::unordered_map<std::string, ClientPtr> Server::GetClients()
+{
+    ReadLock _lock(client_mutex_);
+    decltype(clients_) ret_value = clients_;
+    return ret_value;
 }
 
 bool Server::run()
 {
     while (true) {
         {
-            std::lock_guard<std::mutex> _lock(client_mutex_);
+            ReadLock _lock(client_mutex_);
             if (is_quit_ && clients_.empty()) {
                 is_client_all_quit = true;
                 LOGI("aleady quit all clients......");

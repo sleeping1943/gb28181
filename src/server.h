@@ -16,6 +16,7 @@
 #include <thread>
 #include <unordered_map>
 #include "event_handler/handler.h"
+#include <boost/thread/shared_mutex.hpp>
 
 extern "C" {
 #include <eXosip2/eXosip.h>
@@ -52,6 +53,8 @@ public:
     bool AddClient(ClientPtr client);
     bool RemoveClient(const std::string& device);
     void ClearClient();
+    std::unordered_map<std::string, ClientPtr> GetClients();
+
 
 private:
     bool init_sip_server();
@@ -77,6 +80,6 @@ private:
     std::unordered_map<eXosip_event_type, HandlerPtr> event_map_; // 注册的事件处理函数体
     std::unordered_map<std::string, ClientPtr> clients_;  // 已注册的客户端 <ip, std::shared_ptr<Client>>
 
-    std::mutex client_mutex_;
+    B_Lock client_mutex_;
 };
 };
