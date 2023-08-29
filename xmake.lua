@@ -20,6 +20,7 @@ target("gb28181-server")
 
     add_links(
         "pthread",
+        "hv",
         "osip2", 
         "osipparser2",
         "eXosip2"

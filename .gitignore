@@ -8,3 +8,5 @@ build/*
 .vscode
 gb28181-server
 
+
+*.log

@@ -59,6 +59,12 @@ struct ServerInfo
 };
 using ServerInfoPtr = std::shared_ptr<ServerInfo>;
 
+struct HttpServerInfo
+{
+    std::string ip;
+    unsigned short port;
+};
+
 // 客户端信息
 struct Client
 {
