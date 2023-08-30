@@ -88,9 +88,21 @@ int XHttpServer::query_device_list(HttpRequest* req, HttpResponse* resp)
         ClientPtr device = iter.second;
         rapidjson::Value value(rapidjson::kObjectType);
         rapidjson::Value d_name(rapidjson::kStringType);
+        rapidjson::Value d_ip(rapidjson::kStringType);
+        rapidjson::Value d_port(rapidjson::kNumberType);
+        rapidjson::Value d_ssrc(rapidjson::kStringType);
+        rapidjson::Value d_rtsp_url(rapidjson::kStringType);
         d_name.SetString(device->device.c_str(), allocator);
+        d_ip.SetString(device->ip.c_str(), allocator);
+        d_port.SetInt(device->port);
+        d_ssrc.SetString(device->ssrc.c_str(), allocator);
+        d_rtsp_url.SetString(device->rtsp_url.c_str(), allocator);
         //value.AddMember("name", device->device.c_str(), allocator);
         value.AddMember("name", d_name, allocator);
+        value.AddMember("ip", d_ip, allocator);
+        value.AddMember("port", d_port, allocator);
+        value.AddMember("ssrc", d_ssrc, allocator);
+        value.AddMember("rtsp", d_rtsp_url, allocator);
         arr_device.PushBack(value, allocator);
     }
     doc.AddMember("device_list", arr_device, allocator);

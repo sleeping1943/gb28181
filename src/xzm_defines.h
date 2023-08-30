@@ -97,6 +97,7 @@ struct Client
     bool is_reg = false;
     unsigned short rtp_port = 10000;
     std::string ssrc;   // 10进制
+    std::string rtsp_url;
 };
 using ClientPtr = std::shared_ptr<Client>;
 

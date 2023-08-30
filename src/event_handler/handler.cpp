@@ -34,6 +34,10 @@ int Handler::request_bye(eXosip_event_t *evtp, eXosip_t *sip_context_)
 
 void Handler::response_message(eXosip_event_t *evtp, eXosip_t * sip_context_, int code)
 {
+    if (evtp == nullptr || evtp->request == nullptr) {
+        LOGE("evtp or evtp->requets is nullptr!");
+        return;
+    }
     osip_body_t* body = nullptr;
     char CmdType[64] = {0};
     char DeviceID[64] = {0};
@@ -64,6 +68,7 @@ void Handler::response_message(eXosip_event_t *evtp, eXosip_t * sip_context_, in
     }else{
         this->response_message_answer(evtp, sip_context_, 200);
     }
+    return;
 }
 
 void Handler::response_message_answer(eXosip_event_t *evtp, eXosip_t * sip_context_, int code)
@@ -100,7 +105,9 @@ int Handler::request_invite(eXosip_t *sip_context, ClientPtr client)
     auto s_info = Server::instance()->GetServerInfo();
     client->ssrc = Xzm::util::build_ssrc(true, s_info.realm);
     auto ssrc = Xzm::util::convert10to16(client->ssrc);
-    CLOGI(RED, "addr:%s", Xzm::util::get_rtsp_addr(s_info.rtp_ip, ssrc).c_str());
+    client->rtsp_url = Xzm::util::get_rtsp_addr(s_info.rtp_ip, ssrc);
+    
+    CLOGI(RED, "addr:%s", client->rtsp_url.c_str());
     sprintf(from, "sip:%s@%s:%d", s_info.sip_id.c_str(),s_info.ip.c_str(), s_info.port);
     sprintf(contact, "sip:%s@%s:%d", s_info.sip_id.c_str(),s_info.ip.c_str(), s_info.port);
     sprintf(to, "sip:%s@%s:%d", client->device.c_str(), client->ip.c_str(), client->port);
