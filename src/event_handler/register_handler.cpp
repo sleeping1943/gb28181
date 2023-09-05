@@ -98,6 +98,7 @@ bool RegisterHandler::register_client(eXosip_event_t *evtp, eXosip_t* sip_contex
         LOGI("IP Camera registration succee,ip=%s,port=%d,device=%s",client->ip.c_str(),client->port,client->device.c_str());
         if (!Server::instance()->IsClientExist(client->device)) {   // 不存在该客户端
             Server::instance()->AddClient(client);
+            this->request_device_query(sip_context_, client);
         }
         //request_invite(sip_context_, client);
     } while (0);

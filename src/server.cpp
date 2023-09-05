@@ -152,6 +152,22 @@ bool Server::AddClient(ClientPtr client)
     return true;
 }
 
+bool Server::UpdateClientInfo(const std::string& device_id,
+ std::unordered_map<std::string, ClientInfoPtr> client_infos)
+{
+    WriteLock _lock(client_mutex_);
+    auto device = clients_.begin();
+    for (; device != clients_.end(); ++device) {
+        if (device->second->device == device_id) {
+            break;
+        }
+    }
+    if (device == clients_.end()) { // 未找到对应的已注册设备
+        return false;
+    }
+    device->second->client_infos_ = client_infos;
+    return true;
+}
 bool Server::RemoveClient(const std::string& device)
 {
     WriteLock _lock(client_mutex_);

@@ -51,6 +51,8 @@ public:
     bool Stop();
     bool IsClientExist(const std::string& device);
     bool AddClient(ClientPtr client);
+    bool UpdateClientInfo(const std::string& device_id,
+     std::unordered_map<std::string, ClientInfoPtr> client_infos);
     bool RemoveClient(const std::string& device);
     void ClearClient();
     std::unordered_map<std::string, ClientPtr> GetClients();

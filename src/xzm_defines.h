@@ -13,6 +13,7 @@
 #include <string>
 #include <iostream>
 #include <memory>
+#include <unordered_map>
 #include <sstream>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/shared_mutex.hpp>
@@ -81,6 +82,24 @@ struct HttpServerInfo
     unsigned short port;
 };
 
+struct ClientInfo
+{
+    std::string device_id;
+    std::string name;
+    std::string manufacturer;   // 厂商
+    std::string model;          //IP Camera
+    std::string owner;
+    std::string civil_code;     // 3402000000
+    std::string address;
+    int parental = 0;
+    std::string parent_id;      // 34020000001310000001
+    int register_way = 1;
+    int safety_way = 0;
+    int secrecy = 0;
+    int status = 1;
+};
+using ClientInfoPtr = std::shared_ptr<ClientInfo>;
+
 // 客户端信息
 struct Client
 {
@@ -107,6 +126,7 @@ struct Client
     std::string ssrc;   // 10进制
     std::string rtsp_url;
     XClientType client_type = kClientNone;
+    std::unordered_map<std::string, ClientInfoPtr> client_infos_;   // 每个设备有多个信息，如摄像头有视频和音频2个设备信息
 };
 using ClientPtr = std::shared_ptr<Client>;
 

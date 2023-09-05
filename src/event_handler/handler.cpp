@@ -1,9 +1,16 @@
 #include "handler.h"
 #include "../utils/log.h"
+#include <osipparser2/osip_message.h>
 #include <osipparser2/osip_parser.h>
+#include <ostream>
 #include <string.h>
 #include "../server.h"
 #include "../utils/helper.h"
+#include "../utils/tinyxml2.h"
+
+using tinyxml2::XMLDocument;
+using tinyxml2::XMLError;
+using tinyxml2::XMLElement;
 
 namespace Xzm {
 
@@ -63,6 +70,7 @@ void Handler::response_message(eXosip_event_t *evtp, eXosip_t * sip_context_, in
     LOGI("CmdType=%s,DeviceID=%s", CmdType,DeviceID);
 
     if(!strcmp(CmdType, "Catalog")) {
+        this->parse_device_xml(body->body);
         this->response_message_answer(evtp, sip_context_, 200);
         // 需要根据对方的Catelog请求，做一些相应的应答请求
     } else if(!strcmp(CmdType, "Keepalive")){   // 心跳消息
@@ -153,6 +161,36 @@ int Handler::request_invite(eXosip_t *sip_context, ClientPtr client)
     return ret;
 }
 
+int Handler::request_device_query(eXosip_t *sip_context, ClientPtr client)
+{
+    if (!sip_context || !client) {
+        return -1;
+    }
+    char str_from[512] = {0};
+    char str_to[512] = {0};
+    char str_body[2048] = {0};
+    auto s_info = Server::instance()->GetServerInfo();
+    sprintf(str_from, "sip:%s@%s:%d", s_info.sip_id.c_str(), s_info.ip.c_str(), s_info.port);
+    sprintf(str_to, "sip:%s@%s:%d", client->device.c_str(), client->ip.c_str(), client->port);
+    snprintf(str_body, 2048,
+    "<?xml version=\"1.0\"?>"\
+    "<Query>"   \
+    "<CmdType>Catalog</CmdType>"    \
+    /*"<SN>248</SN>"  \*/
+    "<DeviceID>%s</DeviceID>" \
+    "</Query>", client->device.c_str()
+    );
+
+    osip_message_t *message = nullptr;
+    eXosip_message_build_request(sip_context, &message, "MESSAGE", str_to, str_from, nullptr);
+    osip_message_set_body(message, str_body, strlen(str_body));
+    osip_message_set_content_type(message, "Application/MANSCDP+xml");
+    eXosip_lock(sip_context);
+    int ret = eXosip_message_send_request(sip_context, message);
+    CLOGI(RED, "send device query ret:%d", ret);
+    eXosip_unlock(sip_context);
+    return 0;
+}
 int Handler::parse_xml(const char *data, const char *s_mark, bool with_s_make, const char *e_mark, bool with_e_make, char *dest)
 {
     const char* satrt = strstr( data, s_mark );
@@ -170,6 +208,115 @@ int Handler::parse_xml(const char *data, const char *s_mark, bool with_s_make, c
     }
     return -1;
 
+}
+
+/**
+<Response>
+<CmdType>Catalog</CmdType>
+<SN>0</SN>
+<DeviceID>34020000002000001001</DeviceID>
+<SumNum>2</SumNum>
+<DeviceList Num="2">
+<Item>
+<DeviceID>34020000001310000001</DeviceID>
+<Name>200w</Name>
+<Manufacturer>GBT28181</Manufacturer>
+<Model>IP Camera</Model>
+<Owner>Owner</Owner>
+<CivilCode>3402000000</CivilCode>
+<Address>Address</Address>
+<Parental>0</Parental>
+<ParentID>34020000001310000001</ParentID>
+<SafetyWay>0</SafetyWay>
+<RegisterWay>1</RegisterWay>
+<Secrecy>0</Secrecy>
+<Status>ON</Status>
+</Item>
+<Item>
+<DeviceID>34020000001370000001</DeviceID>
+<Name>AudioOut</Name>
+<Manufacturer>GBT28181</Manufacturer>
+<Model>AudioOut</Model>
+<Owner>Owner</Owner>
+<CivilCode>3402000000</CivilCode>
+<Address>Address</Address>
+<Parental>0</Parental>
+<ParentID>34020000002000001001</ParentID>
+<SafetyWay>0</SafetyWay>
+<RegisterWay>1</RegisterWay>
+<Secrecy>0</Secrecy>
+<Status>ON</Status>
+</Item>
+</DeviceList>
+</Response>
+ */
+int Handler::parse_device_xml(const std::string& xml_str)
+{
+    XMLDocument doc;
+    auto ret = doc.Parse(xml_str.c_str());
+    if (ret != XMLError::XML_SUCCESS) {
+        LOGE("parse device xml error!");
+        return -1;
+    }
+    // 根元素
+    XMLElement *root = doc.RootElement();
+    // 指定名字的第一个子元素
+    XMLElement *node_device_id = root->FirstChildElement("DeviceID");
+    if (!node_device_id) {
+        LOGE("parse device_id error!");
+        return -2;
+    }
+    std::string device_id = node_device_id->GetText();
+    XMLElement *node_device_list = root->FirstChildElement("DeviceList");
+    if (!node_device_list) {
+        LOGE("parse device list error!");
+        return -3;
+    }
+    XMLElement *node_device_item = node_device_list->FirstChildElement("Item");
+    int index = 0;
+    std::string temp_str;
+    std::stringstream ss;
+    std::unordered_map<std::string, ClientInfoPtr> client_infos;   // <device_id, client_info>
+    do {
+        ClientInfoPtr client_info = std::make_shared<ClientInfo>();
+        client_info->device_id = node_device_item->FirstChildElement("DeviceID")->GetText();
+        client_info->name = node_device_item->FirstChildElement("Name")->GetText();
+        client_info->manufacturer = node_device_item->FirstChildElement("Manufacturer")->GetText();
+        client_info->model = node_device_item->FirstChildElement("Model")->GetText();
+        client_info->owner = node_device_item->FirstChildElement("Owner")->GetText();
+        client_info->civil_code = node_device_item->FirstChildElement("CivilCode")->GetText();
+        client_info->address = node_device_item->FirstChildElement("Address")->GetText();
+        temp_str = node_device_item->FirstChildElement("Parental")->GetText();
+        client_info->parental = std::stoi(temp_str);
+        client_info->parent_id = node_device_item->FirstChildElement("ParentID")->GetText();
+        temp_str = node_device_item->FirstChildElement("SafetyWay")->GetText();
+        client_info->safety_way = std::stoi(temp_str);
+        temp_str = node_device_item->FirstChildElement("RegisterWay")->GetText();
+        client_info->register_way = std::stoi(temp_str);
+        temp_str = node_device_item->FirstChildElement("Secrecy")->GetText();
+        client_info->secrecy = std::stoi(temp_str);
+        temp_str = node_device_item->FirstChildElement("Status")->GetText();
+        client_info->status = (temp_str == "ON") ? 1 : 0;
+        client_infos[client_info->device_id] = client_info;
+        node_device_item = node_device_item->NextSiblingElement("Item");
+        ss << "index[" << index++ << "]:" << std::endl
+        << "DeviceID    :" << client_info->device_id << std::endl
+        << "Name        :" << client_info->name << std::endl
+        << "Manufacturer:" << client_info->manufacturer << std::endl
+        << "Model       :" << client_info->model << std::endl
+        << "Owner       :" << client_info->owner << std::endl
+        << "CivilCode   :" << client_info->civil_code << std::endl
+        << "Address     :" << client_info->address << std::endl
+        << "Parental    :" << client_info->parental << std::endl
+        << "ParentID    :" << client_info->parent_id << std::endl
+        << "RegisterWay :" << client_info->register_way << std::endl
+        << "secrecy     :" << client_info->secrecy << std::endl
+        << "status:" << client_info->status << std::endl;
+        CLOGI(RED, "%s", ss.str().c_str());
+        ss.str("");
+    } while (node_device_item);
+    Server::instance()->UpdateClientInfo(device_id, client_infos);
+    return 0;
 }
 
 void Handler::dump_request(eXosip_event_t *evtp)

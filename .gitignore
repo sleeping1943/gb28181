@@ -7,6 +7,8 @@ build/*
 *.o
 .vscode
 gb28181-server
+gb28181-client
+
 
 
 *.log
