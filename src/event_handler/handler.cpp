@@ -21,6 +21,8 @@ bool Handler::Process(eXosip_event_t *evtp, eXosip_t* sip_context_, int code)
 {
     std::cout << "Handler Process!!" << std::endl;
     this->response_message(evtp, sip_context_, code);
+    this->dump_request(evtp);
+    this->dump_response(evtp);
     return true;
 }
 
@@ -168,6 +170,22 @@ int Handler::parse_xml(const char *data, const char *s_mark, bool with_s_make, c
     }
     return -1;
 
+}
+
+void Handler::dump_request(eXosip_event_t *evtp)
+{
+    char *s;
+    size_t len;
+    osip_message_to_str(evtp->request, &s, &len);
+    CLOGI(YELLOW, "\n********************print request start\ttype=%d********************\n%s\n********************print request end********************\n",evtp->type,s);
+}
+
+void Handler::dump_response(eXosip_event_t *evtp)
+{
+    char *s;
+    size_t len;
+    osip_message_to_str(evtp->response, &s, &len);
+    CLOGI(BLUE, "\n********************print response start\ttype=%d********************\n%s\n********************print response end********************\n",evtp->type,s);
 }
 };
 

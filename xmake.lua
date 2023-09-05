@@ -2,7 +2,34 @@ add_rules("mode.debug", "mode.release")
 
 target("gb28181-server")
     set_kind("binary")
-    add_files("src/**.cpp")
+    add_files("src/*.cpp","src/event_handler/**.cpp", "src/http/**.cpp", "src/utils/**.cpp")
+    set_languages("c++11")
+
+    set_targetdir("./")
+    add_cxxflags("-O0", "-Wall", "-g2", "-ggdb")
+    --add_cflags("-g")
+
+    add_includedirs(
+        "./",
+        "/usr/local/include"
+    )
+
+    add_linkdirs(
+        "/usr/local/lib"
+    )
+
+    add_links(
+        "pthread",
+        "hv",
+        "osip2", 
+        "osipparser2",
+        "eXosip2",
+        "boost_thread"
+    )
+
+target("gb28181-client")
+    set_kind("binary")
+    add_files("src/client/src/**.cpp")
     set_languages("c++11")
 
     set_targetdir("./")

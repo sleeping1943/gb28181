@@ -33,6 +33,14 @@ typedef boost::shared_mutex B_Lock;
 typedef boost::unique_lock<B_Lock> WriteLock;
 typedef boost::shared_lock<B_Lock> ReadLock;
 
+// 客户端代理类型
+enum XClientType
+{
+    kClientNone = 0,    // 未知
+    kClientIPC,         // 网络摄像头
+    kClientMax,         // 无
+};
+
 /* sip服务器配置信息 */
 struct ServerInfo
 {
@@ -83,8 +91,8 @@ struct Client
     }
 
     Client(const std::string& _ip, unsigned short _port,
-    const std::string& _device, bool _is_reg, unsigned short _rtp_port):
-    ip(_ip),port(_port),device(_device),is_reg(_is_reg),rtp_port(_rtp_port)
+    const std::string& _device, bool _is_reg, unsigned short _rtp_port, XClientType _client_type):
+    ip(_ip),port(_port),device(_device),is_reg(_is_reg),rtp_port(_rtp_port),client_type(_client_type)
     {
 
     }
@@ -98,6 +106,7 @@ struct Client
     unsigned short rtp_port = 10000;
     std::string ssrc;   // 10进制
     std::string rtsp_url;
+    XClientType client_type = kClientNone;
 };
 using ClientPtr = std::shared_ptr<Client>;
 

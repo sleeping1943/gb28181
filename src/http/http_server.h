@@ -15,6 +15,8 @@
 #include <thread>
 #include <atomic>
 
+#define GERNERATE_ERROR_INFO(err_code, msg) \
+    "{\"code\":err_code, msg:""}"
 namespace Xzm
 {
 class XHttpServer : public util::Singleton<XHttpServer>
@@ -30,7 +32,18 @@ public:
 private:
     XHttpServer();
     int query_device_list(HttpRequest* req, HttpResponse* resp);
+    int start_rtsp_publish(HttpRequest* req, HttpResponse* resp);
+    int stop_rtsp_publish(HttpRequest* req, HttpResponse* resp);
 
+    inline std::string get_simple_info(int code, const std::string& msg)
+    {
+        std::stringstream ss;
+        ss << "{"
+        << "\"code\":" << code << ","
+        << "\"msg\":" << msg
+        << "}";
+        return ss.str();
+    }
 
 private:
     hv::HttpService router;

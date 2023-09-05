@@ -1,0 +1,6 @@
+// 此文件用于http接口测试 基于vscode中的REST Client插件
+@url=http://10.23.132.54:18080
+@header=Content-Type:application/json
+
+###
+get {{url}}/query_device

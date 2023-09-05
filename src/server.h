@@ -55,6 +55,9 @@ public:
     void ClearClient();
     std::unordered_map<std::string, ClientPtr> GetClients();
 
+public:
+    static HandlerPtr kDefaultHandler;
+
 
 private:
     bool init_sip_server();

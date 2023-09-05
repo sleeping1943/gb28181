@@ -6,15 +6,22 @@
 
 #include <arpa/inet.h>
 #include <functional>
+#include <memory>
 #include <mutex>
 #include "event_handler/register_handler.h"
 #include "event_handler/call_answer_handler.h"
 
+/*
+
+GET http://10.23.132.54:18080/query_device
+
+*/
 
 
 namespace Xzm
 {
 
+HandlerPtr Server::kDefaultHandler = std::make_shared<Handler>();
 std::atomic_bool Server::is_server_quit(false);
 std::atomic_bool Server::is_client_all_quit(false);
 
@@ -192,11 +199,9 @@ bool Server::run()
          handler the event here
          应该有个默认的处理函数体,即使没有注册处理函数，也不会没有响应
          */
-        std::shared_ptr<Handler> handler_ptr;
+        std::shared_ptr<Handler> handler_ptr = kDefaultHandler;
         if (event_map_.count(evtp->type) > 0) {
             handler_ptr = event_map_[evtp->type];
-        } else {
-            handler_ptr = std::make_shared<Handler>();
         }
         if (handler_ptr) {
             handler_ptr->Process(evtp, sip_context_,200);

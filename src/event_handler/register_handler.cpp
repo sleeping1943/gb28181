@@ -1,6 +1,7 @@
 #include "register_handler.h"
 #include <iostream>
 #include "/usr/local/include/osipparser2/osip_message.h"
+#include <osipparser2/headers/osip_header.h>
 #include <string.h>
 #include "../server.h"
 #include "../utils/http_digest.h"
@@ -71,17 +72,35 @@ bool RegisterHandler::register_client(eXosip_event_t *evtp, eXosip_t* sip_contex
     auto s_info = Server::instance()->GetServerInfo();
     ClientPtr client = std::make_shared<Client>( contact->url->host,
         atoi(contact->url->port), contact->url->username);
-    if (check_ha1(evtp, auth)) {
+    osip_header_t *user_agent = nullptr;
+    osip_message_get_user_agent(evtp->request, 0, &user_agent); // 获取代理类型,判断是否为摄像头
+    do {
+        if (!user_agent || !user_agent->hname || !user_agent->hvalue) {
+            break;
+        }
+        LOGI("user_agent[name:%s value:%s]", user_agent->hname, user_agent->hvalue);
+        std::string user_agent_type(user_agent->hvalue);
+        if (user_agent_type.compare("IP Camera")) {
+            break;
+        }
+        client->client_type = kClientIPC;
+    } while (0);
+    do {
+        if (!check_ha1(evtp, auth)) {   // 鉴权没通过
+            this->response_message_answer(evtp, sip_context_, 401);
+            LOGI("Camera registration error, p=%s,port=%d,device=%s",client->ip.c_str(),client->port,client->device.c_str());
+            break;
+        }
         this->response_message_answer(evtp, sip_context_, 200);
-        LOGI("Camera registration succee,ip=%s,port=%d,device=%s",client->ip.c_str(),client->port,client->device.c_str());
+        if (client->client_type != kClientIPC) {    // 只保存IP Camera类型客户端
+            break;
+        }
+        LOGI("IP Camera registration succee,ip=%s,port=%d,device=%s",client->ip.c_str(),client->port,client->device.c_str());
         if (!Server::instance()->IsClientExist(client->device)) {   // 不存在该客户端
             Server::instance()->AddClient(client);
         }
-        request_invite(sip_context_, client);
-    } else {
-        this->response_message_answer(evtp, sip_context_, 401);
-        LOGI("Camera registration error, p=%s,port=%d,device=%s",client->ip.c_str(),client->port,client->device.c_str());
-    }
+        //request_invite(sip_context_, client);
+    } while (0);
     return true;
 }
 
