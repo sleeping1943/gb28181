@@ -50,12 +50,14 @@ public:
     bool Start();
     bool Stop();
     bool IsClientExist(const std::string& device);
+    ClientPtr FindClient(const std::string& device);
     bool AddClient(ClientPtr client);
     bool UpdateClientInfo(const std::string& device_id,
      std::unordered_map<std::string, ClientInfoPtr> client_infos);
     bool RemoveClient(const std::string& device);
     void ClearClient();
     std::unordered_map<std::string, ClientPtr> GetClients();
+    int AddRequest(const ClientRequestPtr req_ptr);
 
 public:
     static HandlerPtr kDefaultHandler;
@@ -72,6 +74,8 @@ private:
     bool run();
 
     bool register_event_handler();
+    int process_request();
+
 
 public:
     static std::atomic_bool is_server_quit;
@@ -83,8 +87,12 @@ private:
     struct eXosip_t *sip_context_;
     std::thread thread_;
     std::unordered_map<eXosip_event_type, HandlerPtr> event_map_; // 注册的事件处理函数体
-    std::unordered_map<std::string, ClientPtr> clients_;  // 已注册的客户端 <ip, std::shared_ptr<Client>>
+    std::unordered_map<std::string, ClientPtr> clients_;  // 已注册的客户端 <device_id, std::shared_ptr<Client>>
 
     B_Lock client_mutex_;
+
+    RequestQueue req_queue_;
+    unsigned int max_request_num = 1000;
+    std::mutex req_mutex_;
 };
 };

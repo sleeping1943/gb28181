@@ -15,6 +15,7 @@
 #include <memory>
 #include <unordered_map>
 #include <sstream>
+#include <queue>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/shared_mutex.hpp>
 
@@ -42,6 +43,14 @@ enum XClientType
     kClientMax,         // 无
 };
 
+// 客户端请求类型
+enum RequestType
+{
+    kRequestTypeNone = 0,
+    kRequestTypeInvite, // 建立会话请求
+    kRequestTypeMax = 9999,
+
+};
 /* sip服务器配置信息 */
 struct ServerInfo
 {
@@ -92,7 +101,7 @@ struct ClientInfo
     std::string civil_code;     // 3402000000
     std::string address;
     int parental = 0;
-    std::string parent_id;      // 34020000001310000001
+    std::string parent_id;      // parent_id和client中的device_id相同时，该设备具有语音输出功能
     int register_way = 1;
     int safety_way = 0;
     int secrecy = 0;
@@ -129,5 +138,13 @@ struct Client
     std::unordered_map<std::string, ClientInfoPtr> client_infos_;   // 每个设备有多个信息，如摄像头有视频和音频2个设备信息
 };
 using ClientPtr = std::shared_ptr<Client>;
+
+struct ClientRequest
+{
+    ClientPtr client_ptr;
+    RequestType req_type;
+};
+using ClientRequestPtr = std::shared_ptr<ClientRequest>;
+using RequestQueue = std::queue<ClientRequestPtr>;
 
 };

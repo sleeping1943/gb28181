@@ -35,6 +35,9 @@ private:
     int start_rtsp_publish(HttpRequest* req, HttpResponse* resp);
     int stop_rtsp_publish(HttpRequest* req, HttpResponse* resp);
 
+    int on_publish(HttpRequest* req, HttpResponse* resp);
+    int on_play(HttpRequest* req, HttpResponse* resp);
+
     inline std::string get_simple_info(int code, const std::string& msg)
     {
         std::stringstream ss;

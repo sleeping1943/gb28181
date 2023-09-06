@@ -2,5 +2,11 @@
 @url=http://10.23.132.54:18080
 @header=Content-Type:application/json
 
-###
+### 查询设备信息
 get {{url}}/query_device
+
+### 开始推流
+get {{url}}/start_rtsp_publish?device=34020000002000001001
+
+### 播放鉴权
+post {{url}}/on_play

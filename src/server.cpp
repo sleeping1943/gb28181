@@ -142,6 +142,16 @@ bool Server::IsClientExist(const std::string& device)
     return false;
 }
 
+ClientPtr Server::FindClient(const std::string& device)
+{
+    ClientPtr client_ptr = nullptr;
+    ReadLock _lock(client_mutex_);
+    if (clients_.count(device) > 0) {
+        client_ptr = clients_[device];
+    }
+    return client_ptr;
+}
+
 bool Server::AddClient(ClientPtr client)
 {
     WriteLock _lock(client_mutex_);
@@ -193,6 +203,16 @@ std::unordered_map<std::string, ClientPtr> Server::GetClients()
     return ret_value;
 }
 
+int Server::AddRequest(const ClientRequestPtr req_ptr)
+{
+    std::lock_guard<std::mutex> _lock(req_mutex_);
+    if (req_queue_.size() >= max_request_num) {
+        return -1;
+    }
+    req_queue_.push(req_ptr);
+    return 0;
+}
+
 bool Server::run()
 {
     while (true) {
@@ -205,6 +225,7 @@ bool Server::run()
             }
         }
         eXosip_event_t *evtp = eXosip_event_wait(sip_context_, 0, 20);  // 接受时间20ms超时
+        process_request();
         if (!evtp) {
             eXosip_automatic_action(sip_context_);  // 执行一些自动操作
             osip_usleep(100000);
@@ -249,4 +270,32 @@ bool Server::register_event_handler()
         //{ EXOSIP_IN_SUBSCRIPTION_NEW, nullptr},
     return true;
 }
+
+int Server::process_request()
+{
+    if (!sip_context_ || !kDefaultHandler) {
+        return -1;
+    }
+    std::lock_guard<std::mutex> _lock(req_mutex_);
+    while (!req_queue_.empty()) {
+        auto client_req = req_queue_.front();
+        switch (client_req->req_type) {
+        case kRequestTypeNone:
+        break;
+        case kRequestTypeInvite: // 建立会话请求
+            CLOGI(RED, "process request send invite................................");
+            kDefaultHandler->request_invite(sip_context_, client_req->client_ptr);
+        break;
+        case kRequestTypeMax:
+        break;
+        default:
+        break;
+        }
+        req_queue_.pop();
+    }
+
+    return 0;
+}
+
+
 };

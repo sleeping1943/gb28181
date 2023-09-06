@@ -5,6 +5,7 @@
 #include "../utils/log.h"
 #include <functional>
 #include <hv/HttpServer.h>
+#include <mutex>
 #include "../server.h"
 
 namespace Xzm
@@ -43,6 +44,10 @@ bool XHttpServer::Init(const std::string& conf_path)
      std::bind(&XHttpServer::start_rtsp_publish, this, std::placeholders::_1, std::placeholders::_2));
     router.GET("/stop_rtsp_publish",
      std::bind(&XHttpServer::stop_rtsp_publish, this, std::placeholders::_1, std::placeholders::_2));
+    router.POST("/on_publish",
+    std::bind(&XHttpServer::on_publish, this, std::placeholders::_1, std::placeholders::_2));
+    router.POST("/on_play",
+    std::bind(&XHttpServer::on_play, this, std::placeholders::_1, std::placeholders::_2));
     return true;
 }
 
@@ -111,6 +116,14 @@ int XHttpServer::start_rtsp_publish(HttpRequest* req, HttpResponse* resp)
     if (device.empty()) {
         return resp->String(get_simple_info(400, "can not find param device!"));
     }
+    auto client_ptr = Server::instance()->FindClient(device);
+    if (!client_ptr) {
+        return resp->String(get_simple_info(101, "can not find the device client"));
+    }
+    auto req_ptr = std::make_shared<ClientRequest>();
+    req_ptr->client_ptr = client_ptr;
+    req_ptr->req_type = kRequestTypeInvite;
+    Server::instance()->AddRequest(req_ptr);
     return resp->String(get_simple_info(200, "ok"));
 }
 
@@ -152,4 +165,19 @@ int XHttpServer::stop_rtsp_publish(HttpRequest* req, HttpResponse* resp)
     return resp->String(device_list);
 }
 
+int XHttpServer::on_publish(HttpRequest* req, HttpResponse* resp)
+{
+    req->query_params;
+    CLOGI(CYAN, "http on publish!!!-------------------------------------------------------------------");
+    return 0;
+}
+
+
+int XHttpServer::on_play(HttpRequest* req, HttpResponse* resp)
+{
+    CLOGI(RED, "------------------------------------------http on play---------------------------------");
+    resp->json["code"] = 0; // 鉴权成功
+    resp->json["msg"] = "success";
+    return 200; // http调用成功
+}
 };
