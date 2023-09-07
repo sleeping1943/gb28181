@@ -30,10 +30,24 @@ namespace Xzm
 
 #define SIP_STRDUP(field) if (auth->field) (field) = osip_strdup_without_quote(auth->field)
 
+#define HV_JSON_GET_INT(json, to, key) HV_JSON_GET_VALUE(json, to, key, number_integer)
+#define HV_JSON_GET_STRING(json, to, key) HV_JSON_GET_VALUE(json, to, key, string)
+#define HV_JSON_GET_VALUE(json, to, key, type) auto iter_##to = json.find(key); \
+    if (iter_##to->is_##type()) { \
+        to = iter_##to.value(); \
+    }
 /* 读写锁定义 */
 typedef boost::shared_mutex B_Lock;
 typedef boost::unique_lock<B_Lock> WriteLock;
 typedef boost::shared_lock<B_Lock> ReadLock;
+
+// 摄像头推流状态
+enum DevicePublishState
+{
+    kPublishNone = 0,   // 未知
+    kPublishing,        // 推流中
+    kPublishStop,       // 停止推流
+};
 
 // 客户端代理类型
 enum XClientType
@@ -48,6 +62,7 @@ enum RequestType
 {
     kRequestTypeNone = 0,
     kRequestTypeInvite, // 建立会话请求
+    kRequestTypeCancel, // 断开会话请求
     kRequestTypeMax = 9999,
 
 };

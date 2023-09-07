@@ -43,6 +43,9 @@ public:
 
     void dump_request(eXosip_event_t *evtp);
     void dump_response(eXosip_event_t *evtp);
+
+private:
+    std::atomic_bool is_print;
 };
 using HandlerPtr = std::shared_ptr<Handler>;
 };

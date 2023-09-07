@@ -26,10 +26,13 @@ Handler::~Handler()
 
 bool Handler::Process(eXosip_event_t *evtp, eXosip_t* sip_context_, int code)
 {
+    is_print = true;
     std::cout << "Handler Process!!" << std::endl;
     this->response_message(evtp, sip_context_, code);
-    this->dump_request(evtp);
-    this->dump_response(evtp);
+    if (is_print) {
+        this->dump_request(evtp);
+        this->dump_response(evtp);
+    }
     return true;
 }
 
@@ -55,7 +58,7 @@ void Handler::response_message(eXosip_event_t *evtp, eXosip_t * sip_context_, in
     if(body){
         parse_xml(body->body, "<CmdType>", false, "</CmdType>", false, CmdType);
         parse_xml(body->body, "<DeviceID>", false, "</DeviceID>", false, DeviceID);
-        CLOGI(YELLOW, "%s", body->body);
+        //CLOGI(YELLOW, "%s", body->body);
     }
     
     if (!Server::instance()->IsClientExist(DeviceID)) {  // 服务器没有此客户端信息,断开连接
@@ -74,6 +77,7 @@ void Handler::response_message(eXosip_event_t *evtp, eXosip_t * sip_context_, in
         this->response_message_answer(evtp, sip_context_, 200);
         // 需要根据对方的Catelog请求，做一些相应的应答请求
     } else if(!strcmp(CmdType, "Keepalive")){   // 心跳消息
+        is_print = false;
         this->response_message_answer(evtp, sip_context_, 200);
     }else{
         this->response_message_answer(evtp, sip_context_, 200);
