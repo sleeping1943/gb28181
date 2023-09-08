@@ -19,6 +19,7 @@ unsigned short server_port = 15060;
 bool init_sip();
 void Run();
 int request_invite(const char *server_uac, const char *server_ip, int server_port);
+int request_invite_with_no_sdp(const char *server_uac, const char *server_ip, int server_port);
 void dump_request(eXosip_event_t *evtp);
 void dump_response(eXosip_event_t *evtp);
 
@@ -179,6 +180,45 @@ int request_invite(const char *server_uac, const char *server_ip, int server_por
 
     osip_message_set_body(msg, sdp, strlen(sdp));
     osip_message_set_content_type(msg, "application/sdp");
+    snprintf(session_exp, sizeof(session_exp)-1, "%i;refresher=uac", 1800);
+    osip_message_set_header(msg, "Session-Expires", session_exp);
+    osip_message_set_supported(msg, "timer");
+
+    int call_id = eXosip_call_send_initial_invite(sip_context_, msg);
+
+    if (call_id > 0) {
+        LOGI("eXosip_call_send_initial_invite success: call_id=%d",call_id);
+    }else{
+        LOGE("eXosip_call_send_initial_invite error: call_id=%d",call_id);
+    }
+    return ret;
+}
+
+int request_invite_with_no_sdp(const char *server_uac, const char *server_ip, int server_port)
+{
+    LOGI("INVITE");
+    char session_exp[1024] = { 0 };
+    osip_message_t *msg = nullptr;
+    char from[1024] = {0};
+    char to[1024] = {0};
+    char contact[1024] = {0};
+    char head[1024] = {0};
+
+    char sip_id[] = "34020000002000000001";
+    char local_ip[] = "10.23.132.54";
+    unsigned short local_port = 25060;
+    unsigned short rtp_server_port = 10000;
+
+    sprintf(from, "sip:%s@%s:%d", "XZM_SipClient", local_ip, local_port);
+    sprintf(contact, "sip:%s@%s:%d", "XZM_SipClient", local_ip, local_port);
+    sprintf(to, "sip:%s@%s:%d", sip_id, server_ip, server_port);
+    int ret = eXosip_call_build_initial_invite(sip_context_, &msg, to, from,  nullptr, nullptr);
+    if (ret) {
+        LOGE( "eXosip_call_build_initial_invite error: %s %s ret:%d", from, to, ret);
+        return -1;
+    }
+
+    osip_message_set_content_type(msg, "Application/MANSCDP+xml");
     snprintf(session_exp, sizeof(session_exp)-1, "%i;refresher=uac", 1800);
     osip_message_set_header(msg, "Session-Expires", session_exp);
     osip_message_set_supported(msg, "timer");
