@@ -42,7 +42,7 @@ int main(int argc, char** argv)
         return -2;
     }
     // 等待服务退出
-    unsigned int interval = 5;
+    unsigned int interval = 30;
     while (!Xzm::Server::is_server_quit && !Xzm::Server::is_client_all_quit) {
         CLOGI(YELLOW, "wait for server quit[%ds interval]...", interval);
         std::this_thread::sleep_for(std::chrono::milliseconds(interval * 1000));

@@ -256,6 +256,7 @@ int Handler::request_device_query(eXosip_t *sip_context, ClientPtr client)
 int Handler::request_broadcast(eXosip_t *sip_context, ClientPtr client)
 {
     if (!sip_context || !client) {
+        LOGE("request_broadcast error, sip_context or client is nullptr!");
         return -1;
     }
     ClientInfoPtr client_info_ptr = nullptr;
@@ -383,26 +384,29 @@ int Handler::parse_device_xml(const std::string& xml_str)
     std::string temp_str;
     std::stringstream ss;
     std::unordered_map<std::string, ClientInfoPtr> client_infos;   // <device_id, client_info>
+    XMLElement *temp_node = nullptr;
+    const char* temp_text = nullptr;
     do {
         ClientInfoPtr client_info = std::make_shared<ClientInfo>();
         client_info->device_id = node_device_item->FirstChildElement("DeviceID")->GetText();
-        client_info->name = node_device_item->FirstChildElement("Name")->GetText();
-        client_info->manufacturer = node_device_item->FirstChildElement("Manufacturer")->GetText();
-        client_info->model = node_device_item->FirstChildElement("Model")->GetText();
-        client_info->owner = node_device_item->FirstChildElement("Owner")->GetText();
-        client_info->civil_code = node_device_item->FirstChildElement("CivilCode")->GetText();
-        client_info->address = node_device_item->FirstChildElement("Address")->GetText();
-        temp_str = node_device_item->FirstChildElement("Parental")->GetText();
-        client_info->parental = std::stoi(temp_str);
-        client_info->parent_id = node_device_item->FirstChildElement("ParentID")->GetText();
-        temp_str = node_device_item->FirstChildElement("SafetyWay")->GetText();
-        client_info->safety_way = std::stoi(temp_str);
-        temp_str = node_device_item->FirstChildElement("RegisterWay")->GetText();
-        client_info->register_way = std::stoi(temp_str);
-        temp_str = node_device_item->FirstChildElement("Secrecy")->GetText();
-        client_info->secrecy = std::stoi(temp_str);
-        temp_str = node_device_item->FirstChildElement("Status")->GetText();
-        client_info->status = (temp_str == "ON") ? 1 : 0;
+        XML_GET_STRING(node_device_item, "Name", client_info->name, temp_node, temp_text);
+        XML_GET_STRING(node_device_item, "Manufacturer", client_info->manufacturer, temp_node, temp_text);
+        XML_GET_STRING(node_device_item, "Model", client_info->model, temp_node, temp_text);
+        XML_GET_STRING(node_device_item, "Owner", client_info->owner, temp_node, temp_text);
+        XML_GET_STRING(node_device_item, "CivilCode", client_info->civil_code, temp_node, temp_text);
+        XML_GET_STRING(node_device_item, "Address", client_info->address, temp_node, temp_text);
+        XML_GET_INT(node_device_item, "Parental", client_info->parental, temp_node, temp_text);
+        XML_GET_STRING(node_device_item, "ParentID", client_info->parent_id, temp_node, temp_text);
+        XML_GET_INT(node_device_item, "SafetyWay", client_info->safety_way, temp_node, temp_text);
+        XML_GET_INT(node_device_item, "RegisterWay", client_info->register_way, temp_node, temp_text);
+        XML_GET_INT(node_device_item, "Secrecy", client_info->secrecy, temp_node, temp_text);
+        temp_node = node_device_item->FirstChildElement("Status");
+        if (temp_node) {
+            temp_text = temp_node->GetText();
+            if (temp_text) {
+                client_info->status = (strcmp(temp_text, "ON") == 0) ? 1 : 0;
+            }
+        }
         client_infos[client_info->device_id] = client_info;
         node_device_item = node_device_item->NextSiblingElement("Item");
         ss << "index[" << index++ << "]:" << std::endl

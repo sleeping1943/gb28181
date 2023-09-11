@@ -51,6 +51,8 @@ bool XHttpServer::Init(const std::string& conf_path)
     std::bind(&XHttpServer::on_play, this, std::placeholders::_1, std::placeholders::_2));
     router.GET("/start_invite_talk",
     std::bind(&XHttpServer::start_invite_talk, this, std::placeholders::_1, std::placeholders::_2));
+    router.GET("/start_talk_broadcast",
+    std::bind(&XHttpServer::start_talk_broadcast, this, std::placeholders::_1, std::placeholders::_2));
     return true;
 }
 
@@ -158,6 +160,10 @@ int XHttpServer::query_device_list(HttpRequest* req, HttpResponse* resp)
     doc.Accept(writer);
     device_list = buffer.GetString();
     CLOGI(BLUE, "device_list:%s", device_list.c_str());
+
+    resp->json["code"] = 0; // 鉴权成功
+    resp->json["data"]["action"] = "query_device_list";
+    resp->json["msg"] = "success";
     return resp->String(device_list);
 }
 
@@ -175,7 +181,11 @@ int XHttpServer::start_rtsp_publish(HttpRequest* req, HttpResponse* resp)
     req_ptr->client_ptr = client_ptr;
     req_ptr->req_type = kRequestTypeInvite;
     Server::instance()->AddRequest(req_ptr);
-    return resp->String(get_simple_info(200, "ok"));
+    resp->json["code"] = 0; // 鉴权成功
+    resp->json["data"]["device"] = device;
+    resp->json["data"]["action"] = "start_rtsp_publish";
+    resp->json["msg"] = "success";
+    return kHttpOK;
 }
 
 int XHttpServer::stop_rtsp_publish(HttpRequest* req, HttpResponse* resp)
@@ -194,6 +204,7 @@ int XHttpServer::stop_rtsp_publish(HttpRequest* req, HttpResponse* resp)
     Server::instance()->AddRequest(req_ptr);
     resp->json["code"] = 0; // 鉴权成功
     resp->json["data"]["device"] = device;
+    resp->json["data"]["action"] = "stop_rtsp_publish";
     resp->json["msg"] = "success";
     return kHttpOK; // http调用成功
 }
@@ -214,6 +225,7 @@ int XHttpServer::start_invite_talk(HttpRequest* req, HttpResponse* resp)
     Server::instance()->AddRequest(req_ptr);
     resp->json["code"] = 0; // 鉴权成功
     resp->json["data"]["device"] = device;
+    resp->json["data"]["action"] = "invite_talk";
     resp->json["msg"] = "success";
     return kHttpOK;
 }
@@ -225,6 +237,23 @@ int XHttpServer::stop_talk(HttpRequest* req, HttpResponse* resp)
 
 int XHttpServer::start_talk_broadcast(HttpRequest* req, HttpResponse* resp)
 {
+    std::string device_id = req->GetParam("device_id");
+    if (device_id.empty()) {
+        return resp->String(get_simple_info(400, "错误的device_id"));
+    }
+    auto client_ptr = Server::instance()->FindClient(device_id);
+    if (!client_ptr) {
+        return resp->String(get_simple_info(400, "找不到对应的设备信息"));
+    }
+    auto req_ptr = std::make_shared<ClientRequest>();
+    req_ptr->client_ptr = client_ptr;
+    req_ptr->req_type = kRequestTypeBroadcast;
+    Server::instance()->AddRequest(req_ptr);
+    resp->json["code"] = 0; // 鉴权成功
+    resp->json["data"]["device"] = device_id;
+    resp->json["data"]["action"] = "broadcast";
+    resp->json["msg"] = "success";
+
     return kHttpOK;
 }
 

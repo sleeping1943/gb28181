@@ -297,6 +297,10 @@ int Server::process_request()
         break;
         case kRequestTypeCancelTalk:
         break;
+        case kRequestTypeBroadcast:
+            CLOGI(RED, "process request broadcast..................................");
+            kDefaultHandler->request_broadcast(sip_context_, client_req->client_ptr);
+        break;
         default:
         break;
         }

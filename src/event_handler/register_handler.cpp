@@ -23,7 +23,7 @@ RegisterHandler::~RegisterHandler()
 
 bool RegisterHandler::Process(eXosip_event_t *evtp, eXosip_t* sip_context_, int code)
 {
-    CLOGI(YELLOW, "register_handler Process!!!");
+    //CLOGI(YELLOW, "register_handler Process!!!");
     // contact为null，不能这么获取
     //osip_contact_t *contact = nullptr;
     //osip_message_get_contact(evtp->request, 0, &contact);

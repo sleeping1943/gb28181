@@ -14,6 +14,8 @@ get {{url}}/stop_rtsp_publish?device=34020000002000001001
 ### 开启对讲 start_invite_talk
 get {{url}}/start_invite_talk?device=34020000002000001001
 
+### 开启对讲广播 start_talk_broadcast
+get {{url}}/start_talk_broadcast?device_id=34020000002000001001
 ### 结束对讲
 #get {{url}}/stop_talk?device=34020000002000001001
 
