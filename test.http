@@ -11,5 +11,11 @@ get {{url}}/start_rtsp_publish?device=34020000002000001001
 ### 停止推流
 get {{url}}/stop_rtsp_publish?device=34020000002000001001
 
+### 开启对讲 start_invite_talk
+get {{url}}/start_invite_talk?device=34020000002000001001
+
+### 结束对讲
+#get {{url}}/stop_talk?device=34020000002000001001
+
 ### 播放鉴权
-post {{url}}/on_play
+#post {{url}}/on_play

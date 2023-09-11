@@ -165,6 +165,63 @@ int Handler::request_invite(eXosip_t *sip_context, ClientPtr client)
     return ret;
 }
 
+int Handler::request_invite_talk(eXosip_t *sip_context, ClientPtr client)
+{
+    char session_exp[1024] = { 0 };
+    osip_message_t *msg = nullptr;
+    char from[1024] = {0};
+    char to[1024] = {0};
+    char contact[1024] = {0};
+    char sdp[2048] = {0};
+    char head[1024] = {0};
+
+    auto s_info = Server::instance()->GetServerInfo();
+    client->ssrc = Xzm::util::build_ssrc(true, s_info.realm);
+    auto ssrc = Xzm::util::convert10to16(client->ssrc);
+    client->rtsp_url = Xzm::util::get_rtsp_addr(s_info.rtp_ip, ssrc);
+    
+    CLOGI(RED, "addr:%s", client->rtsp_url.c_str());
+    sprintf(from, "sip:%s@%s:%d", s_info.sip_id.c_str(),s_info.ip.c_str(), s_info.port);
+    sprintf(contact, "sip:%s@%s:%d", s_info.sip_id.c_str(),s_info.ip.c_str(), s_info.port);
+    sprintf(to, "sip:%s@%s:%d", client->device.c_str(), client->ip.c_str(), client->port);
+    snprintf (sdp, 2048,
+              "v=0\r\n"
+              "o=%s 0 0 IN IP4 %s\r\n"
+              "s=Talk\r\n"
+              "c=IN IP4 %s\r\n"
+              "t=0 0\r\n"
+              "m=audio %d RTP/AVP 8\r\n"
+              "a=sendrecv\r\n"
+              "a=rtpmap:8 PCMA/8000\r\n"
+              "a=setup:passive\r\n"
+              "a=connection:new\r\n"
+              "y=%s\r\n"
+              "f=v/a/1/8/1=\r\n", client->device.c_str(),s_info.rtp_ip.c_str(), s_info.rtp_ip.c_str(), s_info.rtp_port, client->ssrc.c_str());
+              //"y=0100000001\r\n"
+              //"f=\r\n", s_info.sip_id.c_str(),s_info.ip.c_str(), s_info.rtp_ip.c_str(), s_info.rtp_port);
+
+    int ret = eXosip_call_build_initial_invite(sip_context, &msg, to, from,  nullptr, nullptr);
+    if (ret) {
+        LOGE( "eXosip_call_build_initial_invite error: %s %s ret:%d", from, to, ret);
+        return -1;
+    }
+
+    osip_message_set_body(msg, sdp, strlen(sdp));
+    osip_message_set_content_type(msg, "application/sdp");
+    snprintf(session_exp, sizeof(session_exp)-1, "%i;refresher=uac", s_info.timeout);
+    osip_message_set_header(msg, "Session-Expires", session_exp);
+    osip_message_set_supported(msg, "timer");
+
+    int call_id = eXosip_call_send_initial_invite(sip_context, msg);
+
+    if (call_id > 0) {
+        LOGI("eXosip_call_send_initial_invite success: call_id=%d",call_id);
+    }else{
+        LOGE("eXosip_call_send_initial_invite error: call_id=%d",call_id);
+    }
+    return ret;
+}
+
 int Handler::request_device_query(eXosip_t *sip_context, ClientPtr client)
 {
     if (!sip_context || !client) {
@@ -195,6 +252,51 @@ int Handler::request_device_query(eXosip_t *sip_context, ClientPtr client)
     eXosip_unlock(sip_context);
     return 0;
 }
+
+int Handler::request_broadcast(eXosip_t *sip_context, ClientPtr client)
+{
+    if (!sip_context || !client) {
+        return -1;
+    }
+    ClientInfoPtr client_info_ptr = nullptr;
+    for (auto obj : client->client_infos_) {
+        auto client_info = obj.second;
+        if (client->device == client_info->parent_id) { // 具有语音输出能力
+            client_info_ptr = client_info;
+            break;
+        }
+    }
+    if (!client_info_ptr) {
+        LOGE("can not find the device to output audio!");
+        return -1;
+    }
+    char str_from[512] = {0};
+    char str_to[512] = {0};
+    char str_body[1024] = {0};
+    auto s_info = Server::instance()->GetServerInfo();
+    sprintf(str_from, "sip:%s@%s:%d", s_info.sip_id.c_str(), s_info.ip.c_str(), s_info.port);
+    sprintf(str_to, "sip:%s@%s:%d", client->device.c_str(), client->ip.c_str(), client->port);
+    snprintf(str_body, 1024,
+    "<?xml version=\"1.0\"?>"\
+    "<Notify>"   \
+    "<CmdType>Broadcast</CmdType>"    \
+    /*"<SN>248</SN>"  \*/
+    "<SourceID>%s</SourceID>" \
+    "<TargetID>%s</TargetID>" \
+    "</Notify>", s_info.sip_id.c_str(), client_info_ptr->device_id.c_str()
+    );
+
+    osip_message_t *message = nullptr;
+    eXosip_message_build_request(sip_context, &message, "MESSAGE", str_to, str_from, nullptr);
+    osip_message_set_body(message, str_body, strlen(str_body));
+    osip_message_set_content_type(message, "Application/MANSCDP+xml");
+    eXosip_lock(sip_context);
+    int ret = eXosip_message_send_request(sip_context, message);
+    CLOGI(RED, "send device query ret:%d", ret);
+    eXosip_unlock(sip_context);
+    return 0;
+}
+
 int Handler::parse_xml(const char *data, const char *s_mark, bool with_s_make, const char *e_mark, bool with_e_make, char *dest)
 {
     const char* satrt = strstr( data, s_mark );

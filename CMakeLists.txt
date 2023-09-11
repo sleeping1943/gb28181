@@ -5,7 +5,57 @@
 # project
 cmake_minimum_required(VERSION 3.15.0)
 cmake_policy(SET CMP0091 NEW)
-project(gb28181-server LANGUAGES CXX C)
+project(gb28181-client LANGUAGES CXX C)
+
+# target
+add_executable(gb28181-client "")
+set_target_properties(gb28181-client PROPERTIES OUTPUT_NAME "gb28181-client")
+set_target_properties(gb28181-client PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/.")
+target_include_directories(gb28181-client PRIVATE
+    .
+    /usr/local/include
+)
+target_compile_options(gb28181-client PRIVATE
+    $<$<COMPILE_LANGUAGE:C>:-m64>
+    $<$<COMPILE_LANGUAGE:CXX>:-m64>
+    $<$<COMPILE_LANGUAGE:CXX>:-O0>
+    $<$<COMPILE_LANGUAGE:CXX>:-Wall>
+    $<$<COMPILE_LANGUAGE:CXX>:-g2>
+    $<$<COMPILE_LANGUAGE:CXX>:-ggdb>
+)
+set_target_properties(gb28181-client PROPERTIES CXX_EXTENSIONS OFF)
+target_compile_features(gb28181-client PRIVATE cxx_std_11)
+if(MSVC)
+    target_compile_options(gb28181-client PRIVATE $<$<CONFIG:Debug>:-Od>)
+else()
+    target_compile_options(gb28181-client PRIVATE -O0)
+endif()
+if(MSVC)
+    target_compile_options(gb28181-client PRIVATE -Zi)
+else()
+    target_compile_options(gb28181-client PRIVATE -g)
+endif()
+if(MSVC)
+    set_property(TARGET gb28181-client PROPERTY
+        MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+target_link_libraries(gb28181-client PRIVATE
+    pthread
+    hv
+    osip2
+    osipparser2
+    eXosip2
+    boost_thread
+)
+target_link_directories(gb28181-client PRIVATE
+    /usr/local/lib
+)
+target_link_options(gb28181-client PRIVATE
+    -m64
+)
+target_sources(gb28181-client PRIVATE
+    src/client/src/main.cpp
+)
 
 # target
 add_executable(gb28181-server "")
@@ -41,9 +91,11 @@ if(MSVC)
 endif()
 target_link_libraries(gb28181-server PRIVATE
     pthread
+    hv
     osip2
     osipparser2
     eXosip2
+    boost_thread
 )
 target_link_directories(gb28181-server PRIVATE
     /usr/local/lib
@@ -52,11 +104,17 @@ target_link_options(gb28181-server PRIVATE
     -m64
 )
 target_sources(gb28181-server PRIVATE
-    src/utils/json_helper.cpp
+    src/server.cpp
+    src/main.cpp
+    src/event_handler/call_answer_handler.cpp
+    src/event_handler/handler.cpp
+    src/event_handler/register_handler.cpp
+    src/http/http_server.cpp
+    src/utils/md5.cpp
     src/utils/helper.cpp
     src/utils/singleton.cpp
-    src/event_handler/register_handler.cpp
-    src/main.cpp
-    src/server.cpp
+    src/utils/tinyxml2.cpp
+    src/utils/json_helper.cpp
+    src/utils/http_digest.cpp
 )
 

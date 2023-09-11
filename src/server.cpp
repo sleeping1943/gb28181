@@ -10,6 +10,7 @@
 #include <mutex>
 #include "event_handler/register_handler.h"
 #include "event_handler/call_answer_handler.h"
+#include "xzm_defines.h"
 
 /*
 
@@ -287,6 +288,14 @@ int Server::process_request()
             kDefaultHandler->request_invite(sip_context_, client_req->client_ptr);
         break;
         case kRequestTypeMax:
+        break;
+        case kRequestTypeCancel:
+        break;
+        case kRequestTypeTalk:  // 开启对话请求
+            CLOGI(RED, "process request send invite................................");
+            kDefaultHandler->request_invite_talk(sip_context_, client_req->client_ptr);
+        break;
+        case kRequestTypeCancelTalk:
         break;
         default:
         break;

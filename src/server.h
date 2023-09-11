@@ -74,6 +74,11 @@ private:
     bool run();
 
     bool register_event_handler();
+    /**
+     * @brief 处理客户端的http请求
+     * 
+     * @return int 
+     */
     int process_request();
 
 
